@@ -22,8 +22,11 @@ public class GameScreen extends Screen {
     // You would create game objects here.
 
     int livesLeft = 1;
-    float holdTime = 0;
+    float spawnTime = 0;
+    float runningTime = 0;
+    boolean checkedLive = false;
     Paint paint;
+    int totalSugar = 0;
     ArrayList<SugarGrain> sugar;
     
 
@@ -49,7 +52,8 @@ public class GameScreen extends Screen {
         // Depending on the state of the game, we call different update methods.
         // Refer to Unit 3's code. We did a similar thing without separating the
         // update methods.
-
+        runningTime += deltaTime/100;
+        
         if (state == GameState.Ready)
             updateReady(touchEvents);
         if (state == GameState.Running)
@@ -71,43 +75,47 @@ public class GameScreen extends Screen {
             state = GameState.Running;
     }
     
-    private void addSugar(float x, float y, float t){
-    	if(t >= 0){
+    private void addSugar(float x, float y){
+    	if(spawnTime >= 0.02){
     		sugar.add(new SugarGrain(x, y));
+    		spawnTime = 0;
+    		totalSugar++;
     	}
     }
     private void updateRunning(List<TouchEvent> touchEvents, float deltaTime) {
         
         //This is identical to the update() method from our Unit 2/3 game.
-        holdTime += 1/deltaTime;
         // 1. All touch input is handled here:
         int len = touchEvents.size();
         for (int i = 0; i < len; i++) {        	
             TouchEvent event = touchEvents.get(i);
-
-            game.getGraphics().drawString(""+holdTime, event.x, event.y, paint);
             
             if (event.type == TouchEvent.TOUCH_DOWN) {
-            	
-                addSugar(event.x, event.y, holdTime);
+                addSugar(event.x, event.y);
             	
             }
             
             if(event.type == TouchEvent.TOUCH_HOLD) {
-            	
-            	addSugar(event.x, event.y, holdTime);
+            	addSugar(event.x, event.y);
             	
             }
             
             if(event.type == TouchEvent.TOUCH_DRAGGED){
-            	addSugar(event.x, event.y, holdTime);
+            	addSugar(event.x, event.y);
+            	
             }
             
             
             if (event.type == TouchEvent.TOUCH_UP) {
-            	holdTime = 0;
+            	spawnTime = 0;
+            	if(totalSugar >= 1000 && event.x > game.getGraphics().getWidth() - "Waste 1000 sugars".length()*8 && event.y <= 64){
+            		totalSugar -= 1000;
+            	}
+            }else{
+            	
+            	spawnTime += deltaTime/100;
+            	
             }
-
             
         }
         
@@ -119,8 +127,14 @@ public class GameScreen extends Screen {
         
         
         // 3. Call individual update() methods here.
-        for(int i = 0; i < sugar.size(); i++)
-        	sugar.get(i).update();
+        for(int i = 0; i < sugar.size(); i++){
+        	if(!sugar.get(i).isDead)
+        		sugar.get(i).update(game.getGraphics());
+        	else{
+        		sugar.remove(i);
+        		i--;
+        	}
+        }
         // This is where all the game updates happen.
         // For example, robot.update();
     }
@@ -156,10 +170,11 @@ public class GameScreen extends Screen {
         Graphics g = game.getGraphics();
 
         // First draw the game elements.
-        g.clearScreen(000000);
+        g.clearScreen(0x000000);
         
         for(int i = 0; i < sugar.size(); i++){
-        	g.drawString("s", (int)sugar.get(i).getX(), (int)sugar.get(i).getY(), paint);
+        	if(!sugar.get(i).isDead)
+        		sugar.get(i).draw(g);
         }
         // Example:
         // g.drawImage(Assets.background, 0, 0);
@@ -198,9 +213,12 @@ public class GameScreen extends Screen {
 
     private void drawRunningUI() {
         Graphics g = game.getGraphics();
-        //g.rotate(10);
-        //g.drawImage(Assets.menu, -Assets.menu.getWidth(), -Assets.menu.getHeight());
-        
+        g.drawString(sugar.size()+" sugars drawn", (sugar.size()+" sugars drawn").length()*8, 32, paint);
+        g.drawString(totalSugar+" sugars in bank", (totalSugar+" sugars in bank").length()*8, 64, paint);
+        if(totalSugar >= 1000){
+        	g.drawString("Waste 1000 sugars", g.getWidth() - "Waste 1000 sugars".length()*8, 32, paint);
+        }
+        //g.drawString(runningTime+"", (runningTime+"").length()*12, 64, paint);
     }
 
     private void drawPausedUI() {
@@ -219,8 +237,8 @@ public class GameScreen extends Screen {
 
     @Override
     public void pause() {
-        if (state == GameState.Running)
-            state = GameState.Paused;
+        /*if (state == GameState.Running)
+            state = GameState.Paused;*/
 
     }
 
