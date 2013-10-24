@@ -23,10 +23,21 @@ public class GameScreen extends Screen {
 
     int livesLeft = 1;
     float spawnTime = 0;
+    float autoSpawnTime = 0;
     float runningTime = 0;
-    boolean checkedLive = false;
+    int upgradeCosts[] = {111, 256};
+    boolean upgradesUnlocked[] = {false, false}; 
+    float autoSpawnRate = 0;
+    float spawnRate = 1;
+    float carryOver = 0;
+    float carryOver2 = 0;
     Paint paint;
     int totalSugar = 0;
+    
+    //debuggin vars
+    int extraSpawned = 0;
+    
+    
     ArrayList<SugarGrain> sugar;
     
 
@@ -76,10 +87,14 @@ public class GameScreen extends Screen {
     }
     
     private void addSugar(float x, float y){
-    	if(spawnTime >= 0.02){
-    		sugar.add(new SugarGrain(x, y));
-    		spawnTime = 0;
-    		totalSugar++;
+    	if(spawnTime >= 0.02/spawnRate){
+    		carryOver += spawnRate;
+    		for(int i = 0; i < carryOver; i++){
+    			if((int)carryOver%2 == 1)
+    				sugar.add(new SugarGrain(x, y));
+    			totalSugar++;
+    			carryOver--;
+    		}
     	}
     }
     private void updateRunning(List<TouchEvent> touchEvents, float deltaTime) {
@@ -108,8 +123,23 @@ public class GameScreen extends Screen {
             
             if (event.type == TouchEvent.TOUCH_UP) {
             	spawnTime = 0;
-            	if(totalSugar >= 1000 && event.x > game.getGraphics().getWidth() - "Waste 1000 sugars".length()*8 && event.y <= 64){
-            		totalSugar -= 1000;
+            	int ypos = 64;
+            	for(int j = 0; j < upgradesUnlocked.length; j++){
+	            	if(event.x > game.getGraphics().getWidth() - 256 && event.y <= ypos){
+	            		if(upgradesUnlocked[0]){
+	            			totalSugar -= upgradeCosts[0];
+	            			upgradeCosts[0] *= 10;
+	            			upgradeCosts[0]++;
+	            			autoSpawnRate += 0.2;
+	            			ypos+=64;
+	            		}else if(upgradesUnlocked[1]){
+	            			totalSugar -= upgradeCosts[1];
+	            			upgradeCosts[1] *= 2;
+	            			spawnRate+=0.2;
+	            			ypos+=64;
+	            		}
+	            		
+	            	}
             	}
             }else{
             	
@@ -127,6 +157,18 @@ public class GameScreen extends Screen {
         
         
         // 3. Call individual update() methods here.
+        autoSpawnTime += deltaTime;
+        if(autoSpawnRate != 0 && autoSpawnTime >= 0.02/autoSpawnRate){
+    		carryOver2 += autoSpawnRate;
+    		for(int i = 0; i < carryOver2; i++){
+    			sugar.add(new SugarGrain(256, 0));
+    			totalSugar++;
+    			carryOver2--;
+    		}
+    		autoSpawnTime = 0;
+    		
+    	}
+        
         for(int i = 0; i < sugar.size(); i++){
         	if(!sugar.get(i).isDead)
         		sugar.get(i).update(game.getGraphics());
@@ -134,6 +176,12 @@ public class GameScreen extends Screen {
         		sugar.remove(i);
         		i--;
         	}
+        }
+        for(int i = 0; i < upgradesUnlocked.length; i++){
+	        if(totalSugar >= upgradeCosts[i])
+	        	upgradesUnlocked[i] = true;
+	        else
+	        	upgradesUnlocked[i] = false;
         }
         // This is where all the game updates happen.
         // For example, robot.update();
@@ -206,21 +254,34 @@ public class GameScreen extends Screen {
         Graphics g = game.getGraphics();
 
         g.drawARGB(155, 0, 0, 0);
-        g.drawString("Tap each side of the screen to move in that direction.",
-                640, 300, paint);
+        g.drawString("Press anywhere to make some sugar.", 640, 300, paint);
+        drawRunningUI();
 
     }
 
     private void drawRunningUI() {
         Graphics g = game.getGraphics();
         g.drawString(sugar.size()+" sugars drawn", (sugar.size()+" sugars drawn").length()*8, 32, paint);
-        g.drawString(totalSugar+" sugars in bank", (totalSugar+" sugars in bank").length()*8, 64, paint);
-        if(totalSugar >= 1000){
-        	g.drawString("Waste 1000 sugars", g.getWidth() - "Waste 1000 sugars".length()*8, 32, paint);
-        }
+        g.drawString(totalSugar+" sugars in bank", (totalSugar+" sugars in bank").length()*7, 64, paint);
+        drawUpgrades(g);
+        
         //g.drawString(runningTime+"", (runningTime+"").length()*12, 64, paint);
     }
 
+    private void drawUpgrades(Graphics g){
+    	int ypos = 32;
+    	for(int i = 0; i < upgradesUnlocked.length; i++){
+    		if(i == 0 && upgradesUnlocked[0]){
+    			g.drawString("Upgrade Production Rate - "+upgradeCosts[0]+" sugars", g.getWidth() - ("Upgrade Production Rate - "+upgradeCosts[0]+" sugars").length()*8, ypos, paint);
+        		ypos += 64;
+    		}
+    		if(i == 1 && upgradesUnlocked[1]){
+    			g.drawString("Auto Production Upgrade - "+upgradeCosts[1]+" sugars", g.getWidth() - ("Auto Production Upgrade - "+upgradeCosts[1]+" sugars").length()*8, ypos, paint);
+        		ypos += 64;
+    		}
+    	}
+    }
+    
     private void drawPausedUI() {
         Graphics g = game.getGraphics();
         // Darken the entire screen so you can display the Paused screen.
