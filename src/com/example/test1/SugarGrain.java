@@ -6,6 +6,9 @@ import com.iantra.framework.*;
 public class SugarGrain extends GameObject{
 	boolean isDead;
 	
+	public void doNothing(){
+		
+	}
 	public SugarGrain(float xx, float yy){
 		setX(xx);
 		setY(yy);
