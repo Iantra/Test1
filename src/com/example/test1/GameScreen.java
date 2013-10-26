@@ -27,6 +27,7 @@ public class GameScreen extends Screen {
     float runningTime = 0;
     int upgradeCosts[] = {111, 256};
     boolean upgradesUnlocked[] = {false, false}; 
+    boolean isBound;
     float autoSpawnRate = 0;
     float spawnRate = 1;
     float carryOver = 0;
@@ -37,7 +38,7 @@ public class GameScreen extends Screen {
     //debuggin vars
     int extraSpawned = 0;
     
-    
+    UpgradeTab tab;
     ArrayList<SugarGrain> sugar;
     
 
@@ -53,6 +54,7 @@ public class GameScreen extends Screen {
         paint.setAntiAlias(true);
         paint.setColor(Color.WHITE);
         sugar = new ArrayList<SugarGrain>();
+        tab  = new UpgradeTab(game.getGraphics());
     }
 
     @Override
@@ -101,29 +103,29 @@ public class GameScreen extends Screen {
         
         //This is identical to the update() method from our Unit 2/3 game.
         // 1. All touch input is handled here:
-        int len = touchEvents.size();
-        for (int i = 0; i < len; i++) {        	
-            TouchEvent event = touchEvents.get(i);
+        //int len = touchEvents.size();
+        //for (int i = 0; i < len; i++) {
+    	try{
+            TouchEvent event = touchEvents.get(0);
             
             if (event.type == TouchEvent.TOUCH_DOWN) {
-                addSugar(event.x, event.y);
-            	
+                handlePress(event);
             }
             
             if(event.type == TouchEvent.TOUCH_HOLD) {
-            	addSugar(event.x, event.y);
-            	
+            	handlePress(event);
             }
             
             if(event.type == TouchEvent.TOUCH_DRAGGED){
-            	addSugar(event.x, event.y);
-            	
+            	handlePress(event);
             }
             
             
             if (event.type == TouchEvent.TOUCH_UP) {
             	spawnTime = 0;
+            	isBound = false;
             	int ypos = 64;
+            	
             	for(int j = 0; j < upgradesUnlocked.length; j++){
 	            	if(event.x > game.getGraphics().getWidth() - 256 && event.y <= ypos){
 	            		if(upgradesUnlocked[0]){
@@ -147,7 +149,7 @@ public class GameScreen extends Screen {
             	
             }
             
-        }
+        }catch(Exception e){}
         
         // 2. Check miscellaneous events like death:
         
@@ -157,7 +159,10 @@ public class GameScreen extends Screen {
         
         
         // 3. Call individual update() methods here.
+        tab.update(game.getGraphics());
+        
         autoSpawnTime += deltaTime;
+        
         if(autoSpawnRate != 0 && autoSpawnTime >= 0.02/autoSpawnRate){
     		carryOver2 += autoSpawnRate;
     		for(int i = 0; i < carryOver2; i++){
@@ -187,7 +192,17 @@ public class GameScreen extends Screen {
         // For example, robot.update();
     }
 
-    private void updatePaused(List<TouchEvent> touchEvents) {
+    
+    private void handlePress(TouchEvent event) {
+    	if(isInBounds(event.x+tab.xdir, tab.getY(), tab) || isBound){
+    		tab.move(event.x);
+    		isBound = true;
+    	}else{
+    		addSugar(event.x, event.y);
+    	}
+	}
+
+	private void updatePaused(List<TouchEvent> touchEvents) {
         int len = touchEvents.size();
         for (int i = 0; i < len; i++) {
             TouchEvent event = touchEvents.get(i);
@@ -263,6 +278,7 @@ public class GameScreen extends Screen {
         Graphics g = game.getGraphics();
         g.drawString(sugar.size()+" sugars drawn", (sugar.size()+" sugars drawn").length()*8, 32, paint);
         g.drawString(totalSugar+" sugars in bank", (totalSugar+" sugars in bank").length()*7, 64, paint);
+        tab.draw(g);
         drawUpgrades(g);
         
         //g.drawString(runningTime+"", (runningTime+"").length()*12, 64, paint);
@@ -316,5 +332,11 @@ public class GameScreen extends Screen {
     @Override
     public void backButton() {
         pause();
+    }
+    
+    public boolean isInBounds(float x, float y, GameObject o){
+    	if(x >= o.getX() && x <= o.getX() + o.getWidth() && y >= o.getY() && y <= o.getY() + o.getHeight())
+    		return true;
+    	return false;
     }
 }
