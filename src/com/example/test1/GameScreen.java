@@ -25,9 +25,7 @@ public class GameScreen extends Screen {
     int livesLeft = 1;
     float spawnTime = 0;
     float autoSpawnTime = 0;
-    float runningTime = 0;
-    int upgradeCosts[] = {111, 256};
-    boolean upgradesUnlocked[] = {false, false}; 
+    float runningTime = 0; 
     boolean isBound;
     float autoSpawnRate = 0;
     float spawnRate = 1;
@@ -126,8 +124,13 @@ public class GameScreen extends Screen {
             	spawnTime = 0;
             	isBound = false;
             	int ypos = 64;
-            	
-            	for(int j = 0; j < upgradesUnlocked.length; j++){
+            	for(int i = 0; i < tab.upgrades.size(); i++){
+            		if(isInBounds(event.x, event.y, tab.upgrades.get(i)) && tab.upgrades.get(i).canAfford(totalSugar) && tab.isOpen()){
+            			totalSugar -= tab.upgrades.get(i).price;
+            			tab.buyUpgrade(i);
+            		}
+            	}
+            	/*for(int j = 0; j < upgradesUnlocked.length; j++){
 	            	if(event.x > game.getGraphics().getWidth() - 256 && event.y <= ypos){
 	            		if(upgradesUnlocked[0]){
 	            			totalSugar -= upgradeCosts[0];
@@ -143,7 +146,7 @@ public class GameScreen extends Screen {
 	            		}
 	            		
 	            	}
-            	}
+            	}*/
             }else{
             	
             	spawnTime += deltaTime/100;
@@ -160,6 +163,8 @@ public class GameScreen extends Screen {
             state = GameState.GameOver;
         }
         
+        spawnRate = 1+.2f*tab.upgrades.get(0).level;
+        autoSpawnRate = .2f*tab.upgrades.get(1).level;
         
         // 3. Call individual update() methods here.
         tab.update(game.getGraphics());
@@ -184,12 +189,6 @@ public class GameScreen extends Screen {
         		sugar.remove(i);
         		i--;
         	}
-        }
-        for(int i = 0; i < upgradesUnlocked.length; i++){
-	        if(totalSugar >= upgradeCosts[i])
-	        	upgradesUnlocked[i] = true;
-	        else
-	        	upgradesUnlocked[i] = false;
         }
         // This is where all the game updates happen.
         // For example, robot.update();
@@ -281,24 +280,9 @@ public class GameScreen extends Screen {
         Graphics g = game.getGraphics();
         g.drawString(sugar.size()+" sugars drawn", (sugar.size()+" sugars drawn").length()*8, 32, paint);
         g.drawString(totalSugar+" sugars in bank", (totalSugar+" sugars in bank").length()*7, 64, paint);
-        tab.draw(g);
-        drawUpgrades(g);
+        tab.draw(g, totalSugar);
         
         //g.drawString(runningTime+"", (runningTime+"").length()*12, 64, paint);
-    }
-
-    private void drawUpgrades(Graphics g){
-    	int ypos = 32;
-    	for(int i = 0; i < upgradesUnlocked.length; i++){
-    		if(i == 0 && upgradesUnlocked[0]){
-    			g.drawString("Upgrade Production Rate - "+upgradeCosts[0]+" sugars", g.getWidth() - ("Upgrade Production Rate - "+upgradeCosts[0]+" sugars").length()*8, ypos, paint);
-        		ypos += 64;
-    		}
-    		if(i == 1 && upgradesUnlocked[1]){
-    			g.drawString("Auto Production Upgrade - "+upgradeCosts[1]+" sugars", g.getWidth() - ("Auto Production Upgrade - "+upgradeCosts[1]+" sugars").length()*8, ypos, paint);
-        		ypos += 64;
-    		}
-    	}
     }
     
     private void drawPausedUI() {
