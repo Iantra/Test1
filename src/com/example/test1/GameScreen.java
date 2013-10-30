@@ -339,7 +339,6 @@ public class GameScreen extends Screen {
     
     public boolean isInBounds(float x, float y, GameObject o){
     	if(x >= o.getX() && x <= o.getX() + o.getWidth() && y >= o.getY() && y <= o.getY() + o.getHeight()){
-    		Log.d("why", "knot");
     		return true;
     	}
     	return false;
