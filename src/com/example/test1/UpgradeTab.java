@@ -8,6 +8,7 @@ public class UpgradeTab extends GameObject{
 	
 	private boolean open = false;
 	private boolean moving = false;
+	private float prevx = 0, xspeed = 0;
 	public int xdir = 32;
 	
 	public UpgradeTab(Graphics g){
@@ -20,37 +21,47 @@ public class UpgradeTab extends GameObject{
 	public void draw(Graphics g){
 			g.drawRect(getX(), getY(), getWidth(), getHeight(), Color.rgb(0, 255, 0));
 			g.drawRect(getX()+3, getY()+3, getWidth()-6, getHeight()-6, Color.BLACK);
-			if(open || !moving)
-				g.drawRect(getX()+64+5, 5, g.getWidth()-10, g.getHeight()-10, Color.rgb(0, 200, 0));
+			g.drawRect(getX()+64+5, 5, g.getWidth()-10, g.getHeight()-10, Color.rgb(0, 200, 0));
 	}
 	
 	public void move(float xx){
+		xspeed = xx - prevx;
 		moving = true;
 		setX(xx);
-		if(!open && getX() <= 1000){
+		if(!open && xspeed < -10){
 			open = true;
 			xdir = -32;
-		}else if(open && getX() >= 200){
+		}else if(open && xspeed >= 10){
 			open = false;
 			xdir = 32;
 		}
+		prevx = xx;
 	}
 	
 	public void update(Graphics g){
 		if(!moving){
+			if(xspeed < -10 && xspeed > -16)
+				xspeed = -16;
+			if(xspeed > 10 && xspeed < 16)
+				xspeed = 16;
+			/* BUGGY if(xspeed == 0 && getX() != g.getWidth()-getWidth() && getX() != -getWidth())
+				xspeed = 16;*/
 			if(open)
 				 if(getX() > -getWidth())
-					 setX(getX()-16);
-				 else
+					 setX(getX()+xspeed);
+				 else{
 					 setX(-getWidth());
+					 xspeed = 0;
+					 }
 			else
 				if(getX() < g.getWidth()-getWidth())
-					setX(getX()+16);
-				else
+					setX(getX()+xspeed);
+				else{
 					setX(g.getWidth()-getWidth());
-		}
-		else
-			moving = false;
+					xspeed = 0;
+				}
+			}
+		moving = false;
 	}
 	
 	public boolean isOpen(){

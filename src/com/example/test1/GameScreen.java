@@ -4,6 +4,7 @@ import java.util.List;
 import java.util.ArrayList;
 import android.graphics.Color;
 import android.graphics.Paint;
+import android.util.Log;
 
 import com.iantra.framework.Game;
 import com.iantra.framework.Graphics;
@@ -107,19 +108,19 @@ public class GameScreen extends Screen {
         //for (int i = 0; i < len; i++) {
     	try{
             TouchEvent event = touchEvents.get(0);
-            
+
             if (event.type == TouchEvent.TOUCH_DOWN) {
                 handlePress(event);
-            }
+            }else
             
             if(event.type == TouchEvent.TOUCH_HOLD) {
             	handlePress(event);
-            }
+            }else
             
             if(event.type == TouchEvent.TOUCH_DRAGGED){
             	handlePress(event);
-            }
-            
+            }else
+            	isBound = false;
             
             if (event.type == TouchEvent.TOUCH_UP) {
             	spawnTime = 0;
@@ -149,7 +150,9 @@ public class GameScreen extends Screen {
             	
             }
             
-        }catch(Exception e){}
+        }catch(Exception e){
+        	isBound = false;
+        }
         
         // 2. Check miscellaneous events like death:
         
@@ -335,8 +338,10 @@ public class GameScreen extends Screen {
     }
     
     public boolean isInBounds(float x, float y, GameObject o){
-    	if(x >= o.getX() && x <= o.getX() + o.getWidth() && y >= o.getY() && y <= o.getY() + o.getHeight())
+    	if(x >= o.getX() && x <= o.getX() + o.getWidth() && y >= o.getY() && y <= o.getY() + o.getHeight()){
+    		Log.d("why", "knot");
     		return true;
+    	}
     	return false;
     }
 }
